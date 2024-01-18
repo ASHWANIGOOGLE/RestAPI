@@ -1,0 +1,53 @@
+import concurrent.futures
+import csv
+import time
+from datetime import datetime, timedelta
+
+def fetch_data(date):
+    # Placeholder function for fetching data from the Google Ads API
+    # Implement the actual API call logic in this function
+    # Return sample data for demonstration purposes
+    return {"date": date, "clicks": 100, "impressions": 1000, "cost": 50.0}
+
+def fetch_and_save_data(start_date, end_date, output_folder):
+    dates_range = [start_date + timedelta(days=i) for i in range((end_date - start_date).days + 1)]
+
+    data = []
+
+    def fetch_data_for_date(date):
+        try:
+            result = fetch_data(date)
+            data.append(result)
+        except Exception as e:
+            print(f"Error fetching data for {date}: {e}")
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(fetch_data_for_date, dates_range)
+
+    # Save aggregated data to a CSV file
+    output_file = f"{output_folder}/google_ads_data.csv"
+    header = ["date", "clicks", "impressions", "cost"]
+
+    with open(output_file, mode="w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=header)
+        writer.writeheader()
+        writer.writerows(data)
+
+if __name__ == "__main__":
+    start_date_str = input("Enter start date (YYYY-MM-DD): ")
+    end_date_str = input("Enter end date (YYYY-MM-DD): ")
+    output_folder = input("Enter output folder: ")
+
+    try:
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+
+        start_time = time.time()
+        fetch_and_save_data(start_date, end_date, output_folder)
+        end_time = time.time()
+
+        print(f"Data fetched and saved successfully in {end_time - start_time:.2f} seconds.")
+    except ValueError as ve:
+        print(f"Invalid date format. Please use YYYY-MM-DD. Error: {ve}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
